@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian Note Generator</title>
+<script src="theme-switch.js" defer></script>
+<script src="jszip.min.js" defer></script>
+<script src="converter.js" defer></script>
+<link rel="stylesheet" id="theme-stylesheet" href="styles-dark.css">
+</head>
+<body>
+<button onclick="toggleTheme()" id="theme-toggle" style="
+  font-family: monospace;
+  font-size: 11px;
+  background: none;
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+  opacity: 0.6;
+">🌙 Dark</button>
+<header>
+  <div class="label">// tool</div>
+  <h1>Obsidian <span>Note</span> Generator</h1>
+  <p class="subtitle">Paste or upload a CSV — configure property names, types, and filename column — then download a zip of .md files ready for your vault.</p>
+</header>
+
+<!-- Step 1 -->
+<div class="card">
+  <div class="card-title">01 — CSV Input</div>
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="fileInput" accept=".csv,.txt,.tsv">
+    <div class="dropzone-icon">📄</div>
+    <p><strong>Drop your CSV or TSV here</strong></p>
+    <p>or click to browse</p>
+  </div>
+  <div class="or">— or paste below —</div>
+  <textarea id="csvText" placeholder="account-number,account-holder-name,bank-name,description&#10;1001,Jane Doe,Chase,Main checking&#10;1002,John Smith,Wells Fargo,Business account"></textarea>
+</div>
+
+<!-- Step 2 -->
+<div class="card" id="mappingCard" style="display:none">
+  <div class="card-title">02 — Configure Columns</div>
+  <p class="hint">Rename properties, set data types, and choose which column names each .md file.</p>
+  <table class="col-table">
+    <thead>
+      <tr>
+        <th>Original Column</th>
+        <th>Property Name</th>
+        <th>Data Type</th>
+        <th class="center">Filename ●</th>
+      </tr>
+    </thead>
+    <tbody id="mappingBody"></tbody>
+  </table>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#5a8fff"></div>text</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ffb347"></div>number</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff6eb4"></div>date</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c77dff"></div>boolean</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#47d7ff"></div>list</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#7fff6e"></div>link</div>
+  </div>
+</div>
+
+<!-- Step 3 -->
+<div class="card" id="previewCard" style="display:none">
+  <div class="card-title">03 — Preview (first row)</div>
+  <div class="preview-box" id="preview"></div>
+</div>
+
+<!-- Status -->
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Waiting for CSV input…</span>
+</div>
+
+<hr class="divider">
+
+<button id="generate" disabled>⬇ Download ZIP of .md Files</button>
+
+<p style="text-align:center; font-family:monospace; font-size:11px; color:#444; margin-top:40px;">
+  Built with <a href="https://claude.ai" style="color:#7fff6e;">Claude</a> by Anthropic
+  &nbsp;·&nbsp;
+  Fonts by <a href="https://fonts.google.com" style="color:#7fff6e;">Google Fonts</a>
+  &nbsp;·&nbsp;
+  ZIP by <a href="https://stuk.github.io/jszip/" style="color:#7fff6e;">JSZip</a> via <a href="https://cdnjs.com" style="color:#7fff6e;">Cloudflare cdnjs</a>
+  &nbsp;·&nbsp;
+  Made circa 2026.04.03-04.
+</p>
+
+</body>
+</html>

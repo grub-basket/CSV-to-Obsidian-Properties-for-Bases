@@ -1,0 +1,104 @@
+<h1>🗂️ Obsidian Note Generator</h1>
+<p>A lightweight, offline-capable browser tool that converts CSV or TSV spreadsheet data into Obsidian-ready <code>.md</code> files with YAML frontmatter — one file per row, downloaded as a ZIP.</p>
+<p>No install. No account. No internet required once saved locally. Open the HTML file and go.</p>
+<hr>
+<h2>Screenshots</h2>
+<h3>1. CSV Input — paste or drop your file</h3>
+<p><img src="screenshots/01-csv-input.png" alt="Screenshot: CSV input area with drag-and-drop zone and paste textarea"></p>
+<h3>2. Column Configuration — rename properties, set types, pick the filename column</h3>
+<p><img src="screenshots/02-column-config.png" alt="Screenshot: Column mapping table showing property name fields, type dropdowns, and filename radio buttons"></p>
+<h3>3. Live Preview — see the exact YAML frontmatter before generating</h3>
+<p><img src="screenshots/03-preview.png" alt="Screenshot: Preview box showing color-coded YAML frontmatter for the first row"></p>
+<h3>4. Output — a ZIP of .md files ready to drop into your vault</h3>
+<p><img src="screenshots/04-output-files.png" alt="Screenshot: File explorer showing the unzipped .md files"></p>
+<hr>
+<h2>Features</h2>
+<ul>
+<li><strong>Drag-and-drop or paste</strong> CSV/TSV directly — no file picker required</li>
+<li><strong>Auto-detects delimiter</strong> — comma or tab, whichever your export uses</li>
+<li><strong>Per-column property naming</strong> — rename any column to a valid Obsidian property key</li>
+<li><strong>Per-column data types</strong> — choose from <code>text</code>, <code>number</code>, <code>date</code>, <code>boolean</code>, <code>list</code>, or <code>link</code>, each formatted correctly in YAML</li>
+<li><strong>Smart date normalization</strong> — converts <code>MM/DD/YYYY</code>, <code>D-M-YYYY</code>, written month names, and Excel serial numbers to <code>YYYY-MM-DD</code> automatically</li>
+<li><strong>Filename column selector</strong> — pick any column as the basis for each <code>.md</code> file's name</li>
+<li><strong>Live preview</strong> — color-coded YAML frontmatter updates instantly as you configure</li>
+<li><strong>Duplicate filename handling</strong> — automatically suffixes conflicting names so nothing gets overwritten</li>
+<li><strong>Quoted-field CSV support</strong> — values containing commas are handled correctly</li>
+<li><strong>Fully offline</strong> — works without an internet connection once <code>jszip.min.js</code> is saved locally</li>
+</ul>
+<hr>
+<h2>File Structure</h2>
+<p>Keep these three files in the same folder:</p>
+<pre><code>obsidian-note-generator/
+├── obsidian-note-generator.html   ← open this in your browser
+├── styles.css                     ← stylesheet
+└── jszip.min.js                   ← bundled locally for offline use
+</code></pre>
+<p>To go fully offline, also remove the Google Fonts <code>@import</code> line at the top of <code>styles.css</code>. The fallback fonts are <code>monospace</code> and <code>sans-serif</code> (Courier New / Arial on Windows, Menlo / Helvetica on Mac).</p>
+<hr>
+<h2>Usage</h2>
+<p><strong>1. Open</strong> <code>obsidian-note-generator.html</code> in any modern browser.</p>
+<p><strong>2. Load your data</strong> — either drag your <code>.csv</code> or <code>.tsv</code> file onto the drop zone, or paste the raw CSV text directly.</p>
+<p><strong>3. Configure columns</strong> — for each column detected from your header row:</p>
+<ul>
+<li>Edit the <strong>property name</strong> (auto-slugified from your header)</li>
+<li>Set the <strong>data type</strong> using the dropdown</li>
+<li>Click the <strong>●</strong> radio to choose which column names each <code>.md</code> file</li>
+</ul>
+<p><strong>4. Check the preview</strong> — the first row renders as live YAML so you can catch any issues before generating.</p>
+<p><strong>5. Click Download</strong> — a <code>obsidian-notes.zip</code> file downloads containing one <code>.md</code> file per row.</p>
+<p><strong>6. Unzip into your vault</strong> — drop the files into the relevant folder in Obsidian.</p>
+<hr>
+<h2>Data Types</h2>
+<table><thead><tr><th>Type</th><th>YAML output</th><th>Notes</th></tr></thead><tbody><tr><td><code>text</code></td><td><code>property: "value"</code></td><td>Default. Handles commas and special characters safely.</td></tr><tr><td><code>number</code></td><td><code>property: 1234</code></td><td>Unquoted. Falls back to quoted text if the value isn't numeric.</td></tr><tr><td><code>date</code></td><td><code>property: 2024-03-15</code></td><td>Normalizes multiple input formats to <code>YYYY-MM-DD</code>.</td></tr><tr><td><code>boolean</code></td><td><code>property: true</code></td><td>Recognizes <code>true</code>, <code>yes</code>, <code>1</code> as true; everything else is <code>false</code>.</td></tr><tr><td><code>list</code></td><td><code>property:</code><br>  <code>- "value"</code></td><td>Multi-value list. Each CSV cell becomes a single-item list.</td></tr><tr><td><code>link</code></td><td><code>property: "[[value]]"</code></td><td>Wraps the value in Obsidian internal link syntax.</td></tr></tbody></table>
+<hr>
+<h2>Date Normalization</h2>
+<p>When a column is set to <code>date</code>, the tool attempts to parse and reformat to <code>YYYY-MM-DD</code>:</p>
+<table><thead><tr><th>Input format</th><th>Example</th><th>Output</th></tr></thead><tbody><tr><td>Already correct</td><td><code>2024-03-15</code></td><td><code>2024-03-15</code></td></tr><tr><td>US (Excel default)</td><td><code>3/15/2024</code></td><td><code>2024-03-15</code></td></tr><tr><td>European</td><td><code>15-3-2024</code> or <code>15.3.2024</code></td><td><code>2024-03-15</code></td></tr><tr><td>Written month</td><td><code>March 15, 2024</code></td><td><code>2024-03-15</code></td></tr><tr><td>Short month</td><td><code>Mar 15 2024</code></td><td><code>2024-03-15</code></td></tr><tr><td>Excel serial</td><td><code>45366</code></td><td><code>2024-03-15</code></td></tr></tbody></table>
+<p>If the value can't be parsed, it's passed through as-is rather than corrupted.</p>
+<hr>
+<h2>Tips</h2>
+<ul>
+<li><strong>Commas in values</strong> — export from Excel normally; Excel automatically wraps fields containing commas in quotes, which the parser handles correctly. Alternatively, export as Tab Delimited (<code>.txt</code>) to avoid the issue entirely.</li>
+<li><strong>Account numbers as numbers</strong> — set the column type to <code>number</code> so Obsidian treats them as numeric properties. Make sure the values contain no letters or symbols.</li>
+<li><strong>Internal links</strong> — use the <code>link</code> type to wrap values in <code>[[...]]</code>. If you need multiple links in one property, use <code>list</code> type and manually format values as <code>[[Note Name]]</code> in your source data.</li>
+<li><strong>Property names</strong> — keep them lowercase with hyphens (e.g. <code>account-holder-name</code>). The tool slugifies automatically, but names with spaces or special characters will need bracket syntax in Obsidian Bases formulas: <code>note["Property Name"]</code>.</li>
+</ul>
+<hr>
+<h2>Offline Setup</h2>
+<ol>
+<li>Download <code>jszip.min.js</code> from:
+<pre><code>https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
+</code></pre>
+</li>
+<li>Place it in the same folder as the HTML file.</li>
+<li>In <code>obsidian-note-generator.html</code>, change:
+<pre><code class="language-html">&#x3C;script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">&#x3C;/script>
+</code></pre>
+to:
+<pre><code class="language-html">&#x3C;script src="jszip.min.js">&#x3C;/script>
+</code></pre>
+</li>
+<li>Optionally remove the <code>@import</code> line at the top of <code>styles.css</code> to drop the Google Fonts dependency too.</li>
+</ol>
+<hr>
+<h2>Example CSV</h2>
+<p>See <a href="sample-accounts.csv"><code>sample-accounts.csv</code></a> for a ready-to-use test file.</p>
+<hr>
+<h2>Requirements</h2>
+<ul>
+<li>Any modern browser (Chrome, Firefox, Edge, Safari)</li>
+<li>No server, no backend, no install</li>
+</ul>
+<h2>Caveats &#x26; Disclaimers</h2>
+<ul>
+<li>Not all property types are supported by this tool. For more types, review see the [Property Types documention on Obisidian's published Help Vault].</li>
+<li>I am not a programmer / software engineer/ coder, etc.</li>
+</ul>
+<h2>Credits</h2>
+<ul>
+<li><strong><a href="https://claude.ai">Claude</a> by Anthropic</strong> — designed and built entirely through conversation, including the HTML, CSS, JavaScript, date parsing, and this README</li>
+<li><strong><a href="https://fonts.google.com">Google Fonts</a></strong> — IBM Plex Mono and IBM Plex Sans, served free for open use</li>
+<li><strong><a href="https://stuk.github.io/jszip/">JSZip</a></strong> by Stuart Knightley — ZIP file generation in the browser, hosted via <strong><a href="https://cdnjs.com">Cloudflare cdnjs</a></strong></li>
+</ul>
+<h3>Built circa</h3>
+<p>2026.04.03-04</p>

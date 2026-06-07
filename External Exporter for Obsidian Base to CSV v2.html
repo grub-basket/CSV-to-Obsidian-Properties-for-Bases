@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obsidian Frontmatter Exporter</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f4f0; --surface: #ffffff;
+    --border: rgba(0,0,0,0.12); --border-strong: rgba(0,0,0,0.25);
+    --text: #1a1a18; --text-muted: #6b6a65;
+    --accent: #185FA5; --accent-bg: #E6F1FB; --accent-text: #0C447C;
+    --success: #3B6D11; --success-bg: #EAF3DE;
+    --warn-bg: #FAEEDA; --warn-text: #633806;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --surface: #252523;
+      --border: rgba(255,255,255,0.1); --border-strong: rgba(255,255,255,0.2);
+      --text: #e8e7e2; --text-muted: #9a9890;
+      --accent: #378ADD; --accent-bg: #042C53; --accent-text: #85B7EB;
+      --success: #97C459; --success-bg: #173404;
+      --warn-bg: #412402; --warn-text: #FAC775;
+    }
+  }
+  body { font-family: 'Georgia', serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+  .app { max-width: 960px; margin: 0 auto; }
+  header { margin-bottom: 2rem; }
+  header h1 { font-size: 1.6rem; font-weight: normal; letter-spacing: -0.02em; }
+  header p { font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem; font-family: sans-serif; }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .card-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-family: sans-serif; margin-bottom: 0.75rem; }
+  .drop-zone { border: 1.5px dashed var(--border-strong); border-radius: var(--radius); padding: 1.5rem; text-align: center; cursor: pointer; transition: background 0.15s, border-color 0.15s; font-family: sans-serif; font-size: 0.875rem; color: var(--text-muted); }
+  .drop-zone:hover, .drop-zone.drag-over { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-text); }
+  .drop-zone input { display: none; }
+  .drop-zone .icon { font-size: 1.5rem; margin-bottom: 0.4rem; display: block; }
+  .status-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-family: sans-serif; padding: 4px 10px; border-radius: 20px; margin-top: 0.6rem; }
+  .status-badge.ok { background: var(--success-bg); color: var(--success); }
+  .status-badge.warn { background: var(--warn-bg); color: var(--warn-text); }
+  .status-badge.info { background: var(--accent-bg); color: var(--accent-text); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  button { font-family: sans-serif; font-size: 0.85rem; padding: 8px 16px; border-radius: var(--radius); cursor: pointer; border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text); transition: background 0.12s, transform 0.08s; }
+  button:hover { background: var(--bg); }
+  button:active { transform: scale(0.98); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { opacity: 0.88; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 0.5px solid var(--border); max-height: 520px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 0.8rem; table-layout: fixed; }
+  th { background: var(--bg); color: var(--text-muted); font-weight: 500; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 10px; text-align: left; border-bottom: 0.5px solid var(--border-strong); position: sticky; top: 0; z-index: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  td { padding: 6px 10px; border-bottom: 0.5px solid var(--border); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--accent-bg); }
+  .row-count { font-size: 0.78rem; font-family: sans-serif; color: var(--text-muted); margin-bottom: 0.5rem; }
+  .progress-bar-wrap { background: var(--border); border-radius: 4px; height: 4px; overflow: hidden; margin-top: 0.75rem; }
+  .progress-bar { height: 100%; background: var(--accent); transition: width 0.1s; border-radius: 4px; }
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: var(--bg); font-family: sans-serif; font-size: 0.82rem; padding: 10px 16px; border-radius: var(--radius); opacity: 0; transform: translateY(8px); transition: opacity 0.2s, transform 0.2s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Obsidian Frontmatter Exporter</h1>
+    <p>Drop a folder of markdown files — auto-discovers all frontmatter keys and builds a table.</p>
+  </header>
+
+  <div class="card">
+    <div class="card-title">Markdown folder</div>
+    <div class="drop-zone" id="folderZone">
+      <span class="icon">📁</span>
+      Click or drop a folder of <code>.md</code> files here
+      <input type="file" id="folderInput" webkitdirectory multiple>
+    </div>
+    <div id="folderStatus"></div>
+    <div id="progressWrap" style="display:none">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div id="tableSection" style="display:none">
+    <div class="actions">
+      <button class="primary" id="copyBtn">Copy for Excel</button>
+      <button id="csvBtn">Download CSV</button>
+    </div>
+    <div class="row-count" id="rowCount"></div>
+    <div class="table-wrap">
+      <div id="tableContainer"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const state = { columns: [], rows: [] };
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function unquote(s) {
+  s = s.trim();
+  if (s.length >= 2 && ((s[0] === '"' && s[s.length-1] === '"') || (s[0] === "'" && s[s.length-1] === "'")))
+    return s.slice(1, -1);
+  return s;
+}
+
+function parseFrontmatter(text) {
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!match) return {};
+  const fm = {};
+  const lines = match[1].split(/\r?\n/);
+  let currentKey = null;
+  let listItems = [];
+
+  const flush = () => {
+    if (currentKey !== null && listItems.length) {
+      fm[currentKey] = listItems.join(', ');
+      listItems = [];
+      currentKey = null;
+    }
+  };
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const indent = line.match(/^(\s*)/)[1].length;
+
+    if (indent === 0) {
+      flush();
+      const m = line.match(/^([^:]+):\s*(.*)/);
+      if (m) {
+        currentKey = m[1].trim();
+        const val = m[2].trim();
+        if (val) { fm[currentKey] = unquote(val); currentKey = null; }
+        // else: wait for list items or next key
+      }
+    } else if (line.trim().startsWith('- ') && currentKey !== null) {
+      listItems.push(unquote(line.trim().slice(2)));
+    }
+  }
+  flush();
+  return fm;
+}
+
+async function handleFolder(files) {
+  const mdFiles = Array.from(files).filter(f => f.name.endsWith('.md'));
+  if (!mdFiles.length) {
+    document.getElementById('folderStatus').innerHTML =
+      `<div class="status-badge warn">⚠ No .md files found</div>`;
+    return;
+  }
+
+  document.getElementById('folderStatus').innerHTML =
+    `<div class="status-badge info">⟳ Reading ${mdFiles.length.toLocaleString()} files…</div>`;
+  const progressWrap = document.getElementById('progressWrap');
+  progressWrap.style.display = 'block';
+  const progressBar = document.getElementById('progressBar');
+  progressBar.style.width = '0%';
+
+  const rows = [];
+  const keyOrder = [];
+  const keySet = new Set();
+  let done = 0;
+  const BATCH = 150;
+
+  for (let i = 0; i < mdFiles.length; i += BATCH) {
+    const batch = mdFiles.slice(i, i + BATCH);
+    await Promise.all(batch.map(file => new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const fm = parseFrontmatter(e.target.result);
+        for (const k of Object.keys(fm)) {
+          if (!keySet.has(k)) { keySet.add(k); keyOrder.push(k); }
+        }
+        rows.push({ name: file.name.replace(/\.md$/, ''), fm });
+        done++;
+        progressBar.style.width = Math.round((done / mdFiles.length) * 100) + '%';
+        resolve();
+      };
+      reader.onerror = () => { rows.push({ name: file.name.replace(/\.md$/, ''), fm: {} }); done++; resolve(); };
+      reader.readAsText(file);
+    })));
+  }
+
+  state.columns = keyOrder;
+  state.rows = rows;
+
+  progressWrap.style.display = 'none';
+  document.getElementById('folderStatus').innerHTML =
+    `<div class="status-badge ok">✓ ${mdFiles.length.toLocaleString()} files — ${keyOrder.length} unique keys found</div>`;
+
+  renderTable();
+}
+
+function renderTable() {
+  const { columns, rows } = state;
+  document.getElementById('tableSection').style.display = 'block';
+  document.getElementById('rowCount').textContent =
+    `${rows.length.toLocaleString()} rows × ${columns.length + 1} columns`;
+
+  const colW = Math.max(100, Math.min(180, Math.floor(880 / (columns.length + 1))));
+
+  let html = `<table><thead><tr><th style="width:${colW}px">file name</th>`;
+  for (const k of columns) html += `<th style="width:${colW}px" title="${k}">${k}</th>`;
+  html += `</tr></thead><tbody>`;
+
+  const MAX = 2000;
+  for (const row of rows.slice(0, MAX)) {
+    html += `<tr><td title="${row.name}">${row.name}</td>`;
+    for (const k of columns) {
+      const v = row.fm[k] !== undefined ? String(row.fm[k]) : '';
+      html += `<td title="${v.replace(/"/g,'&quot;')}">${v}</td>`;
+    }
+    html += `</tr>`;
+  }
+  if (rows.length > MAX) {
+    html += `<tr><td colspan="${columns.length + 1}" style="text-align:center;color:var(--text-muted);font-style:italic;padding:10px">
+      … ${(rows.length - MAX).toLocaleString()} more rows — export to see all</td></tr>`;
+  }
+  html += `</tbody></table>`;
+  document.getElementById('tableContainer').innerHTML = html;
+}
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const { columns, rows } = state;
+  if (!rows.length) return;
+  const lines = [['file name', ...columns].join('\t')];
+  for (const row of rows) {
+    const cells = [row.name, ...columns.map(k => {
+      const v = row.fm[k] !== undefined ? String(row.fm[k]) : '';
+      return v.includes('\t') || v.includes('\n') ? `"${v.replace(/"/g,'""')}"` : v;
+    })];
+    lines.push(cells.join('\t'));
+  }
+  navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('Copied — paste into Excel.'));
+});
+
+document.getElementById('csvBtn').addEventListener('click', () => {
+  const { columns, rows } = state;
+  if (!rows.length) return;
+  const esc = v => { const s = String(v ?? ''); return (s.includes(',') || s.includes('"') || s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s; };
+  const lines = [['file name', ...columns].map(esc).join(',')];
+  for (const row of rows) {
+    lines.push([row.name, ...columns.map(k => row.fm[k] !== undefined ? String(row.fm[k]) : '')].map(esc).join(','));
+  }
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'obsidian-export.csv' });
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('CSV downloaded.');
+});
+
+const zone = document.getElementById('folderZone');
+const input = document.getElementById('folderInput');
+zone.addEventListener('click', () => input.click());
+input.addEventListener('change', () => handleFolder(input.files));
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); if (e.dataTransfer.files.length) handleFolder(e.dataTransfer.files); });
+</script>
+</body>
+</html>

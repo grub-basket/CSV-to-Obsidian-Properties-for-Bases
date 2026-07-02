@@ -3,8 +3,9 @@ const themes = {
   dark:  { file: 'styles-dark.css',  next: 'light', label: '☀️ Light' },
 };
 
-// Load saved preference, fall back to light
-let current = localStorage.getItem('theme') || 'light';
+// Load saved preference, fall back to the OS color scheme
+const osPref = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+let current = localStorage.getItem('theme') || osPref;
 applyTheme(current);
 
 function toggleTheme() {

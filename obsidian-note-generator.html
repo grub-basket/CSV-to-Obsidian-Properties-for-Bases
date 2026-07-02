@@ -10,16 +10,7 @@
 <link rel="stylesheet" id="theme-stylesheet" href="styles-dark.css">
 </head>
 <body>
-<button onclick="toggleTheme()" id="theme-toggle" style="
-  font-family: monospace;
-  font-size: 11px;
-  background: none;
-  border: 1px solid currentColor;
-  border-radius: 3px;
-  padding: 5px 10px;
-  cursor: pointer;
-  opacity: 0.6;
-">🌙 Dark</button>
+<button onclick="toggleTheme()" id="theme-toggle">🌙 Dark</button>
 <header>
   <div class="label">// tool</div>
   <h1>Obsidian <span>Note</span> Generator</h1>
@@ -28,7 +19,10 @@
 
 <!-- Step 1 -->
 <div class="card">
-  <div class="card-title">01 — CSV Input</div>
+  <div class="card-head">
+    <div class="card-title">01 — CSV Input</div>
+    <button type="button" id="loadSample" class="ghost-btn">Load sample data</button>
+  </div>
   <div class="dropzone" id="dropzone">
     <input type="file" id="fileInput" accept=".csv,.txt,.tsv">
     <div class="dropzone-icon">📄</div>
@@ -42,10 +36,11 @@
 <!-- Step 2 -->
 <div class="card" id="mappingCard" style="display:none">
   <div class="card-title">02 — Configure Columns</div>
-  <p class="hint">Rename properties, set data types, and choose which column names each .md file.</p>
+  <p class="hint">Untick columns to leave them out of the export. Rename properties, set data types, and choose which column names each .md file.</p>
   <table class="col-table">
     <thead>
       <tr>
+        <th class="check-col"><input type="checkbox" id="includeAll" checked title="Include or exclude all columns"></th>
         <th>Original Column</th>
         <th>Property Name</th>
         <th>Data Type</th>
@@ -54,19 +49,30 @@
     </thead>
     <tbody id="mappingBody"></tbody>
   </table>
+  <label class="option-row">
+    <input type="checkbox" id="omitEmpty">
+    Omit empty values — leave a property out of a note when its cell is blank
+  </label>
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#5a8fff"></div>text</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ffb347"></div>number</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ff6eb4"></div>date</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#c77dff"></div>boolean</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#47d7ff"></div>list</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#7fff6e"></div>link</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--type-text)"></div>text</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--type-number)"></div>number</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--type-date)"></div>date</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--type-boolean)"></div>boolean</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--type-list)"></div>list</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--type-link)"></div>link</div>
   </div>
 </div>
 
 <!-- Step 3 -->
 <div class="card" id="previewCard" style="display:none">
-  <div class="card-title">03 — Preview (first row)</div>
+  <div class="card-head">
+    <div class="card-title">03 — Preview</div>
+    <div class="row-nav">
+      <button type="button" id="prevRow" class="ghost-btn" title="Previous row">◀</button>
+      <span id="rowIndicator">Row 1 of 1</span>
+      <button type="button" id="nextRow" class="ghost-btn" title="Next row">▶</button>
+    </div>
+  </div>
   <div class="preview-box" id="preview"></div>
 </div>
 
@@ -80,12 +86,12 @@
 
 <button id="generate" disabled>⬇ Download ZIP of .md Files</button>
 
-<p style="text-align:center; font-family:monospace; font-size:11px; color:#444; margin-top:40px;">
-  Built with <a href="https://claude.ai" style="color:#7fff6e;">Claude</a> by Anthropic
+<p class="footer-credits">
+  Built with <a href="https://claude.ai">Claude</a> by Anthropic
   &nbsp;·&nbsp;
-  Fonts by <a href="https://fonts.google.com" style="color:#7fff6e;">Google Fonts</a>
+  Fonts by <a href="https://fonts.google.com">Google Fonts</a>
   &nbsp;·&nbsp;
-  ZIP by <a href="https://stuk.github.io/jszip/" style="color:#7fff6e;">JSZip</a> via <a href="https://cdnjs.com" style="color:#7fff6e;">Cloudflare cdnjs</a>
+  ZIP by <a href="https://stuk.github.io/jszip/">JSZip</a> via <a href="https://cdnjs.com">Cloudflare cdnjs</a>
   &nbsp;·&nbsp;
   Made circa 2026.04.03-04.
 </p>

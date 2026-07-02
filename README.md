@@ -28,11 +28,15 @@ No install. No account. No internet required once saved locally. Open the HTML f
 
 - **Drag-and-drop or paste** CSV/TSV directly — no file picker required
 - **Auto-detects delimiter** — comma or tab, whichever your export uses
-- **Per-column property naming** — rename any column to a valid Obsidian property key
+- **Pick which columns to export** — untick any column to leave it out of the generated notes; a header checkbox includes/excludes all at once
+- **Per-column property naming** — headers auto-convert to readable Title Case names with spaces (e.g. `account-holder-name` → `Account Holder Name`), and you can rename any of them
 - **Per-column data types** — choose from `text`, `number`, `date`, `boolean`, `list`, or `link`, each formatted correctly in YAML
 - **Smart date normalization** — converts `MM/DD/YYYY`, `D-M-YYYY`, written month names, and Excel serial numbers to `YYYY-MM-DD` automatically
 - **Filename column selector** — pick any column as the basis for each `.md` file's name
-- **Live preview** — color-coded YAML frontmatter updates instantly as you configure
+- **Live preview with row navigation** — color-coded YAML frontmatter updates instantly as you configure, and you can step through every row, not just the first
+- **Omit empty values** — optionally leave a property out of a note when its cell is blank
+- **Sample values in the column table** — each column shows an example value from your data to make type choices easy
+- **Load sample data** — one click loads a built-in example CSV to try the tool
 - **Duplicate filename handling** — automatically suffixes conflicting names so nothing gets overwritten
 - **Quoted-field CSV support** — values containing commas are handled correctly
 - **Fully offline** — works without an internet connection once `jszip.min.js` is saved locally
@@ -61,11 +65,12 @@ To go fully offline, also remove the Google Fonts `@import` line at the top of `
 **2. Load your data** — either drag your `.csv` or `.tsv` file onto the drop zone, or paste the raw CSV text directly.
 
 **3. Configure columns** — for each column detected from your header row:
-   - Edit the **property name** (auto-slugified from your header)
+   - Tick or untick the **include** checkbox to control whether the column is exported
+   - Edit the **property name** (auto-converted to Title Case from your header)
    - Set the **data type** using the dropdown
    - Click the **●** radio to choose which column names each `.md` file
 
-**4. Check the preview** — the first row renders as live YAML so you can catch any issues before generating.
+**4. Check the preview** — rows render as live YAML, and the ◀ ▶ buttons step through every row so you can catch issues before generating.
 
 **5. Click Download** — a `obsidian-notes.zip` file downloads containing one `.md` file per row.
 
@@ -81,7 +86,7 @@ To go fully offline, also remove the Google Fonts `@import` line at the top of `
 | `number` | `property: 1234` | Unquoted. Falls back to quoted text if the value isn't numeric. |
 | `date` | `property: 2024-03-15` | Normalizes multiple input formats to `YYYY-MM-DD`. |
 | `boolean` | `property: true` | Recognizes `true`, `yes`, `1` as true; everything else is `false`. |
-| `list` | `property:`<br>&nbsp;&nbsp;`- "value"` | Multi-value list. Each CSV cell becomes a single-item list. |
+| `list` | `property:`<br>&nbsp;&nbsp;`- "value"` | Multi-value list. Cell values are split on semicolons or commas, one list item each. |
 | `link` | `property: "[[value]]"` | Wraps the value in Obsidian internal link syntax. |
 
 ---
@@ -108,7 +113,7 @@ If the value can't be parsed, it's passed through as-is rather than corrupted.
 - **Commas in values** — export from Excel normally; Excel automatically wraps fields containing commas in quotes, which the parser handles correctly. Alternatively, export as Tab Delimited (`.txt`) to avoid the issue entirely.
 - **Account numbers as numbers** — set the column type to `number` so Obsidian treats them as numeric properties. Make sure the values contain no letters or symbols.
 - **Internal links** — use the `link` type to wrap values in `[[...]]`. If you need multiple links in one property, use `list` type and manually format values as `[[Note Name]]` in your source data.
-- **Property names** — keep them lowercase with hyphens (e.g. `account-holder-name`). The tool slugifies automatically, but names with spaces or special characters will need bracket syntax in Obsidian Bases formulas: `note["Property Name"]`.
+- **Property names** — the tool defaults to readable Title Case names with spaces (e.g. `Account Holder Name`), which display nicely in Obsidian. Note that names with spaces need bracket syntax in Obsidian Bases formulas: `note["Account Holder Name"]`. If you write a lot of Bases formulas, rename them to lowercase-with-hyphens style instead.
 
 ---
 

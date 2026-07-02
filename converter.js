@@ -1,5 +1,7 @@
 let parsedRows = [];
 let headers = [];
+let lastHeaderKey = '';   // used to keep column config when only data rows change
+let previewRowIdx = 0;
 
 const csvText    = document.getElementById('csvText');
 const fileInput  = document.getElementById('fileInput');
@@ -11,8 +13,26 @@ const preview    = document.getElementById('preview');
 const statusDot  = document.getElementById('statusDot');
 const statusText = document.getElementById('statusText');
 const generateBtn = document.getElementById('generate');
+const includeAll = document.getElementById('includeAll');
+const omitEmpty  = document.getElementById('omitEmpty');
+const prevRowBtn = document.getElementById('prevRow');
+const nextRowBtn = document.getElementById('nextRow');
+const rowIndicator = document.getElementById('rowIndicator');
+const loadSampleBtn = document.getElementById('loadSample');
 
 const TYPES = ['text', 'number', 'date', 'boolean', 'list', 'link'];
+
+const SAMPLE_CSV = `account-number,account-holder-name,bank-name,description,date-opened,balance
+10042,Jane Doe,Chase,Primary personal checking,3/12/2019,4823.5
+10043,Jane Doe,Chase,Joint savings with partner,3/12/2019,12400
+10091,Robert Martinez,Wells Fargo,Business operating account,7/1/2021,31750.75
+10092,Robert Martinez,Wells Fargo,Business reserve fund,7/1/2021,9000
+10105,Priya Nair,Bank of America,Personal checking,11/5/2020,2250
+10106,Priya Nair,Bank of America,High-yield savings,11/5/2020,18600
+10134,David Chen,Citibank,Checking - direct deposit,2/28/2018,5410.2
+10201,Sandra Okafor,US Bank,Personal checking,9/14/2022,780
+10202,Sandra Okafor,US Bank,Emergency fund savings,9/14/2022,6500
+10250,Tom Nguyen,Chase,Freelance income account,1/3/2023,11230.9`;
 
 dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
 dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
@@ -32,6 +52,11 @@ function readFile(file) {
 }
 
 csvText.addEventListener('input', processCSV);
+
+if (loadSampleBtn) loadSampleBtn.addEventListener('click', () => {
+  csvText.value = SAMPLE_CSV;
+  processCSV();
+});
 
 function parseCSV(text) {
   const firstLine = text.split(/\r?\n/)[0];
@@ -60,8 +85,24 @@ function parseCSV(text) {
   return result;
 }
 
-function toPropertyKey(str) {
-  return str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, '');
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// "account-holder-name" / "account_holder_name" / "accountHolderName" → "Account Holder Name"
+function toPropertyName(str) {
+  return str
+    .replace(/[_\-]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ') || 'Column';
 }
 
 function guessType(header, samples) {
@@ -81,6 +122,7 @@ function processCSV() {
     mappingCard.style.display = 'none';
     previewCard.style.display = 'none';
     generateBtn.disabled = true;
+    lastHeaderKey = '';
     return;
   }
   try {
@@ -88,10 +130,23 @@ function processCSV() {
     if (rows.length < 2) { setStatus('error', 'Need at least a header row and one data row.'); generateBtn.disabled = true; return; }
     headers = rows[0];
     parsedRows = rows.slice(1).filter(r => r.some(c => c !== ''));
-    buildMappingUI();
-    updatePreview();
-    setStatus('ready', `${parsedRows.length} row${parsedRows.length !== 1 ? 's' : ''} detected — ready to generate`);
-    generateBtn.disabled = false;
+    if (!parsedRows.length) {
+      setStatus('error', 'Need at least a header row and one data row.');
+      generateBtn.disabled = true;
+      mappingCard.style.display = 'none';
+      previewCard.style.display = 'none';
+      return;
+    }
+    previewRowIdx = Math.min(previewRowIdx, Math.max(0, parsedRows.length - 1));
+    // Only rebuild the column config when the headers change, so edits to
+    // data rows don't wipe the user's property names / types / selections.
+    const headerKey = JSON.stringify(headers);
+    if (headerKey !== lastHeaderKey) {
+      buildMappingUI();
+      lastHeaderKey = headerKey;
+      previewRowIdx = 0;
+    }
+    refreshState();
     mappingCard.style.display = 'block';
     previewCard.style.display = 'block';
   } catch(e) {
@@ -105,38 +160,80 @@ function buildMappingUI() {
   headers.forEach((h, i) => {
     const samples = parsedRows.slice(0, 5).map(r => r[i] || '');
     const guessed = guessType(h, samples);
+    const sample = samples.find(v => v !== '') || '';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><div class="col-original" title="${h}">${h}</div></td>
-      <td><input type="text" id="propname_${i}" value="${toPropertyKey(h)}" placeholder="property-name"></td>
+      <td class="check-col">
+        <input type="checkbox" class="include-check" id="include_${i}" checked title="Include this column in the export">
+      </td>
+      <td>
+        <div class="col-original" title="${esc(h)}">${esc(h)}</div>
+        <div class="col-sample" title="${esc(sample)}">${esc(sample)}</div>
+      </td>
+      <td><input type="text" id="propname_${i}" value="${esc(toPropertyName(h))}" placeholder="Property Name"></td>
       <td>
         <select id="proptype_${i}" class="type-${guessed}">
           ${TYPES.map(t => `<option value="${t}"${t===guessed?' selected':''}>${t}</option>`).join('')}
         </select>
       </td>
       <td class="radio-col">
-        <input type="radio" name="filenameCol" value="${i}"${i===0?' checked':''}>
+        <input type="radio" name="filenameCol" value="${i}"${i===0?' checked':''} title="Use this column as the filename">
       </td>
     `;
     mappingBody.appendChild(tr);
     const sel = tr.querySelector(`#proptype_${i}`);
-    sel.addEventListener('change', () => { sel.className = `type-${sel.value}`; updatePreview(); });
+    sel.addEventListener('change', () => { sel.className = `type-${sel.value}`; refreshState(); });
   });
   mappingBody.querySelectorAll('input').forEach(el => {
-    el.addEventListener('change', updatePreview);
-    el.addEventListener('input', updatePreview);
+    el.addEventListener('change', refreshState);
+    el.addEventListener('input', refreshState);
   });
+  if (includeAll) includeAll.checked = true;
 }
+
+if (includeAll) includeAll.addEventListener('change', () => {
+  mappingBody.querySelectorAll('.include-check').forEach(cb => { cb.checked = includeAll.checked; });
+  refreshState();
+});
+
+if (omitEmpty) omitEmpty.addEventListener('change', refreshState);
+
+if (prevRowBtn) prevRowBtn.addEventListener('click', () => { previewRowIdx = Math.max(0, previewRowIdx - 1); refreshState(); });
+if (nextRowBtn) nextRowBtn.addEventListener('click', () => { previewRowIdx = Math.min(parsedRows.length - 1, previewRowIdx + 1); refreshState(); });
 
 function getColConfig() {
   return headers.map((h, i) => ({
-    propName: (document.getElementById(`propname_${i}`)?.value.trim()) || toPropertyKey(h),
+    propName: (document.getElementById(`propname_${i}`)?.value.trim()) || toPropertyName(h),
     type: document.getElementById(`proptype_${i}`)?.value || 'text',
+    include: document.getElementById(`include_${i}`)?.checked !== false,
   }));
 }
 
 function getFilenameColIdx() {
   return parseInt(document.querySelector('input[name="filenameCol"]:checked')?.value || '0');
+}
+
+// Refresh master checkbox, preview, status, and button state after any config change
+function refreshState() {
+  if (!parsedRows.length) return;
+  const config = getColConfig();
+  const includedCount = config.filter(c => c.include).length;
+
+  if (includeAll) {
+    includeAll.checked = includedCount === config.length;
+    includeAll.indeterminate = includedCount > 0 && includedCount < config.length;
+  }
+
+  updatePreview();
+
+  if (includedCount === 0) {
+    setStatus('error', 'No columns included — tick at least one column to export.');
+    generateBtn.disabled = true;
+  } else {
+    const excluded = config.length - includedCount;
+    setStatus('ready', `${parsedRows.length} row${parsedRows.length !== 1 ? 's' : ''} · ${includedCount} of ${config.length} column${config.length !== 1 ? 's' : ''} included${excluded ? ` (${excluded} excluded)` : ''} — ready to generate`);
+    generateBtn.disabled = false;
+  }
 }
 
 function normalizeDate(val) {
@@ -190,7 +287,12 @@ function formatValue(val, type) {
     case 'number':  return (val !== '' && !isNaN(val)) ? val : `"${val.replace(/"/g,'\\"')}"`;
     case 'boolean': return (['true','1','yes'].includes(val.toLowerCase())) ? 'true' : 'false';
     case 'date':    return normalizeDate(val);
-    case 'list':    return `\n  - "${val.replace(/"/g,'\\"')}"`;
+    case 'list': {
+      // Split on semicolons or commas so one cell can hold multiple items
+      const items = val.split(/[;,]/).map(s => s.trim()).filter(Boolean);
+      if (!items.length) return ' []';
+      return items.map(it => `\n  - "${it.replace(/"/g,'\\"')}"`).join('');
+    }
     case 'link':    return `"[[${val.replace(/"/g,'\\"')}]]"`;
     default:        return `"${val.replace(/"/g,'\\"')}"`;
   }
@@ -198,9 +300,13 @@ function formatValue(val, type) {
 
 function rowToFrontmatter(row) {
   const config = getColConfig();
+  const skipEmpty = omitEmpty?.checked;
   let yaml = '---\n';
   config.forEach((col, i) => {
-    yaml += `${col.propName}: ${formatValue(row[i]||'', col.type)}\n`;
+    if (!col.include) return;
+    const raw = (row[i] || '').trim();
+    if (skipEmpty && raw === '') return;
+    yaml += `${col.propName}: ${formatValue(raw, col.type)}\n`;
   });
   yaml += '---\n';
   return yaml;
@@ -208,19 +314,27 @@ function rowToFrontmatter(row) {
 
 function updatePreview() {
   if (!parsedRows.length) return;
-  const row = parsedRows[0];
+  const row = parsedRows[previewRowIdx];
   const config = getColConfig();
+  const skipEmpty = omitEmpty?.checked;
   const fnIdx = getFilenameColIdx();
-  const filename = sanitizeFilename(row[fnIdx] || 'note-1');
+  const filename = sanitizeFilename(row[fnIdx] || `note-${previewRowIdx+1}`);
 
-  let html = `<span class="filename-hint"># ${filename}.md</span>\n`;
+  let html = `<span class="filename-hint"># ${esc(filename)}.md</span>\n`;
   html += '<span class="yaml-fence">---</span>\n';
   config.forEach((col, i) => {
-    const formatted = formatValue(row[i]||'', col.type);
-    html += `<span class="prop-key">${col.propName}</span>: <span class="type-${col.type}">${formatted}</span>\n`;
+    if (!col.include) return;
+    const raw = (row[i] || '').trim();
+    if (skipEmpty && raw === '') return;
+    const formatted = formatValue(raw, col.type);
+    html += `<span class="prop-key">${esc(col.propName)}</span>: <span class="type-${col.type}">${esc(formatted)}</span>\n`;
   });
   html += '<span class="yaml-fence">---</span>';
   preview.innerHTML = html;
+
+  if (rowIndicator) rowIndicator.textContent = `Row ${previewRowIdx + 1} of ${parsedRows.length}`;
+  if (prevRowBtn) prevRowBtn.disabled = previewRowIdx === 0;
+  if (nextRowBtn) nextRowBtn.disabled = previewRowIdx >= parsedRows.length - 1;
 }
 
 function sanitizeFilename(str) {
@@ -232,12 +346,13 @@ generateBtn.addEventListener('click', async () => {
   generateBtn.textContent = '⏳ Generating…';
   const zip = new JSZip();
   const fnIdx = getFilenameColIdx();
-  const seen = {};
+  const usedNames = new Set();
   parsedRows.forEach((row, idx) => {
-    let base = sanitizeFilename(row[fnIdx] || `note-${idx+1}`);
-    if (seen[base]) { seen[base]++; base = `${base}-${seen[base]}`; }
-    else seen[base] = 1;
-    zip.file(`${base}.md`, rowToFrontmatter(row));
+    const base = sanitizeFilename(row[fnIdx] || `note-${idx+1}`);
+    let name = base, n = 2;
+    while (usedNames.has(name)) { name = `${base}-${n++}`; }
+    usedNames.add(name);
+    zip.file(`${name}.md`, rowToFrontmatter(row));
   });
   const blob = await zip.generateAsync({ type: 'blob' });
   const a = document.createElement('a');

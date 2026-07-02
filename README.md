@@ -4,6 +4,8 @@ A lightweight, offline-capable browser tool that converts CSV or TSV spreadsheet
 
 No install. No account. No internet required once saved locally. Open the HTML file and go.
 
+**🌐 Use it online:** **[grub-basket.github.io/CSV-to-Obsidian-Properties-for-Bases](https://grub-basket.github.io/CSV-to-Obsidian-Properties-for-Bases/)** — no download needed. Hat tip to [@fork-archive-hub](https://github.com/fork-archive-hub), whose fork was quietly serving this on GitHub Pages before the original repo got around to it.
+
 > **Need to go the other way?** Try the companion tool **[Bases to CSV](https://bases-to-csv.netlify.app/)** — a web app that takes a folder of Markdown files and exports a single `.csv` you can open back in Excel. Handy as an escape hatch if Obsidian ever breaks, since an Obsidian Base is really just a YAML view/query definition — the actual data lives in each note's frontmatter, not in the Base itself — so there's no built-in way to get a plain spreadsheet back out.
 
 ---
@@ -20,7 +22,7 @@ No install. No account. No internet required once saved locally. Open the HTML f
 ![Screenshot: Preview box showing color-coded YAML frontmatter for the first row](screenshots/03-preview.png)
 
 ### 4. Output — a ZIP of .md files ready to drop into your vault
-![Screenshot: File explorer showing the unzipped .md files](screenshots/04-output-files.png)
+![Screenshot: Status bar reporting rows and included columns, above the download button](screenshots/04-output-files.png)
 
 ---
 
@@ -45,16 +47,19 @@ No install. No account. No internet required once saved locally. Open the HTML f
 
 ## File Structure
 
-Keep these three files in the same folder:
+Keep these files in the same folder:
 
 ```
 obsidian-note-generator/
 ├── obsidian-note-generator.html   ← open this in your browser
-├── styles.css                     ← stylesheet
+├── converter.js                   ← the conversion logic
+├── theme-switch.js                ← dark/light theme toggle
+├── styles-dark.css                ← dark theme
+├── styles-light.css               ← light theme
 └── jszip.min.js                   ← bundled locally for offline use
 ```
 
-To go fully offline, also remove the Google Fonts `@import` line at the top of `styles.css`. The fallback fonts are `monospace` and `sans-serif` (Courier New / Arial on Windows, Menlo / Helvetica on Mac).
+To go fully offline, also remove the Google Fonts `@import` line at the top of both CSS files. The fallback fonts are `monospace` and `sans-serif` (Courier New / Arial on Windows, Menlo / Helvetica on Mac).
 
 ---
 
@@ -119,20 +124,9 @@ If the value can't be parsed, it's passed through as-is rather than corrupted.
 
 ## Offline Setup
 
-1. Download `jszip.min.js` from:
-   ```
-   https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
-   ```
-2. Place it in the same folder as the HTML file.
-3. In `obsidian-note-generator.html`, change:
-   ```html
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-   ```
-   to:
-   ```html
-   <script src="jszip.min.js"></script>
-   ```
-4. Optionally remove the `@import` line at the top of `styles.css` to drop the Google Fonts dependency too.
+The repo already ships `jszip.min.js` locally and the HTML references it with a relative path, so offline use works out of the box: download/clone the folder, open `obsidian-note-generator.html`, done.
+
+Optionally remove the Google Fonts `@import` line at the top of `styles-dark.css` and `styles-light.css` to drop the last external dependency (fonts fall back to your system's monospace / sans-serif).
 
 ---
 

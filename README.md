@@ -164,3 +164,7 @@ This tool gets data **into** Obsidian. Its companion, **[Bases to CSV](https://b
 
 ### Built Circa
 2026.04.03-04
+
+## License
+
+[MIT](LICENSE). Bundled [JSZip](https://stuk.github.io/jszip/) is dual-licensed MIT/GPLv3 and used here under MIT.

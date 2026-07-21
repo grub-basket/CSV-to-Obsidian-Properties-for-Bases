@@ -428,6 +428,42 @@ footer {
 :root {
   --muted: #9b9895;
 }
+
+/* ── Archive banner ── */
+.archive-banner {
+  position: relative;
+  z-index: 101;
+  margin: 72px auto 0;
+  max-width: 960px;
+  /* horizontal padding matches .hero so the text lines up with the headline */
+  padding: 16px 64px;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  border-radius: 3px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.archive-banner strong {
+  color: var(--text);
+  font-weight: 400;
+}
+
+.archive-banner a {
+  color: var(--green);
+  text-decoration: none;
+  border-bottom: 1px solid var(--green-dim);
+}
+
+.archive-banner a:hover { border-color: var(--green); }
+
+@media (max-width: 700px) {
+  .archive-banner { margin: 64px auto 0; padding: 14px 24px; }
+}
 </style>
 </head>
 <body>
@@ -441,6 +477,14 @@ footer {
     <a href="sample-accounts.csv" download>Sample</a>
   </div>
 </nav>
+
+<!-- Archive notice -->
+<div class="archive-banner">
+  <strong>📦 Archived.</strong> This tool still works, but it isn't updated anymore.
+  The CSV importer now lives inside <a href="https://github.com/grub-basket/Bases-Toolbox">Bases Toolbox</a>,
+  an Obsidian plugin that writes notes straight into your vault — no ZIP, no unzipping, and it can
+  auto-create a <code>.base</code> for them.
+</div>
 
 <!-- Hero -->
 <section class="hero">

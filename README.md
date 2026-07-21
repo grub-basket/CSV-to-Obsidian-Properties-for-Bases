@@ -1,5 +1,18 @@
 # 🗂️ Obsidian Note Generator
 
+> ## 📦 This project is archived — there's a better option now
+>
+> The CSV importer lives on inside **[Bases Toolbox](https://github.com/grub-basket/Bases-Toolbox)**, an Obsidian plugin. Its **Import CSV as notes** panel is a direct descendant of this tool's converter — same column mapping, property types, and date normalization — plus everything a plugin can do that a web page can't:
+>
+> - Writes notes **straight into a folder in your vault** — no ZIP, no unzip, no drag-and-drop
+> - Optionally **auto-creates a `.base`** for the imported notes
+> - Handles **quoted fields containing newlines** (a known limitation of this tool)
+> - Runs on **mobile and desktop**, inside Obsidian
+>
+> 👉 **[Get Bases Toolbox](https://github.com/grub-basket/Bases-Toolbox)**
+>
+> This repo stays up as a read-only reference, and the [hosted web version](https://grub-basket.github.io/CSV-to-Obsidian-Properties-for-Bases/) keeps working if you want a no-install, browser-only tool. It just won't be updated.
+
 A lightweight, offline-capable browser tool that converts CSV or TSV spreadsheet data into Obsidian-ready `.md` files with YAML frontmatter — one file per row, downloaded as a ZIP.
 
 No install. No account. No internet required once saved locally. Open the HTML file and go.

@@ -527,3 +527,33 @@ button#generate:disabled {
 
 .footer-credits a { color: var(--accent); text-decoration: none; }
 .footer-credits a:hover { text-decoration: underline; }
+
+/* Archive banner */
+.archive-banner {
+  width: 100%;
+  max-width: 780px;
+  margin-bottom: 24px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 5px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-mid);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.archive-banner strong { color: var(--text); }
+
+.archive-banner code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.archive-banner a { color: var(--accent); text-decoration: none; }
+.archive-banner a:hover { text-decoration: underline; }
